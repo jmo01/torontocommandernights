@@ -103,7 +103,19 @@
     .mini-tag { font-size: 11px; padding: .18rem .42rem; border-radius: 999px; }
     .mini-tag.yes { background: var(--color-success-highlight); color: var(--color-success); }
     .mini-tag.no { background: var(--color-error-highlight); color: var(--color-error); }
-    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } .sidebar { position: static; } }
+    .week-chart-wrap { margin-top: var(--space-6); border: 1px solid var(--color-border); border-radius: var(--radius-xl); overflow: hidden; background: var(--color-surface); }
+    .week-chart-head { padding: 1rem 1.25rem; border-bottom: 1px solid var(--color-border); background: var(--color-surface-2); }
+    .week-chart-head p { color: var(--color-text-muted); max-width: 70ch; }
+    .week-grid { display: grid; grid-template-columns: 110px repeat(7, minmax(120px, 1fr)); }
+    .week-cell, .week-time { min-height: 92px; border-right: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); padding: .75rem; }
+    .week-time { background: var(--color-surface-2); font-size: var(--text-sm); font-weight: 700; color: var(--color-text-muted); }
+    .week-day-head { min-height: 64px; background: var(--color-surface-2); font-size: var(--text-sm); font-weight: 700; }
+    .week-cell { display: grid; gap: .5rem; align-content: start; background: color-mix(in srgb, var(--color-surface) 96%, transparent); }
+    .slot-event { border-radius: var(--radius-md); padding: .55rem .65rem; font-size: var(--text-xs); line-height: 1.35; border: 1px solid transparent; }
+    .slot-event.yes { background: var(--color-success-highlight); color: var(--color-success); border-color: color-mix(in srgb, var(--color-success) 30%, white); }
+    .slot-event.no { background: var(--color-error-highlight); color: var(--color-error); border-color: color-mix(in srgb, var(--color-error) 30%, white); }
+    .slot-event strong { display: block; font-size: var(--text-sm); color: var(--color-text); }
+    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } .sidebar { position: static; } .week-chart-wrap { overflow-x: auto; } .week-grid { min-width: 980px; } }
     @media (max-width: 640px) { .detail-grid, .calendar-strip { grid-template-columns: 1fr; } .app { padding: var(--space-4); } }
   </style>
 </head>
@@ -157,6 +169,13 @@
         </div>
         <div class="calendar-strip" id="calendarStrip"></div>
         <div class="cards" id="cards"></div>
+        <div class="week-chart-wrap">
+          <div class="week-chart-head">
+            <div class="meta-label">Weekly time blocks</div>
+            <p>A full-week view using 3-hour blocks, starting on Sunday, so every game store entry is placed where a calendar-style planner would show it.</p>
+          </div>
+          <div class="week-grid" id="weekGrid"></div>
+        </div>
       </section>
     </main>
   </div>
@@ -183,6 +202,17 @@
     ];
 
     const dayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const weekChartOrder = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const timeBlocks = [
+      { label: '12 AM–3 AM', start: 0, end: 3 },
+      { label: '3 AM–6 AM', start: 3, end: 6 },
+      { label: '6 AM–9 AM', start: 6, end: 9 },
+      { label: '9 AM–12 PM', start: 9, end: 12 },
+      { label: '12 PM–3 PM', start: 12, end: 15 },
+      { label: '3 PM–6 PM', start: 15, end: 18 },
+      { label: '6 PM–9 PM', start: 18, end: 21 },
+      { label: '9 PM–12 AM', start: 21, end: 24 }
+    ];
     const storeNames = [...new Set(entries.map(entry => entry.store))].sort((a, b) => a.localeCompare(b));
     let activeDay = 'all';
     let activeStore = 'all';
@@ -194,6 +224,7 @@
     const calendarStrip = document.getElementById('calendarStrip');
     const storeFilter = document.getElementById('storeFilter');
     const clearFilters = document.getElementById('clearFilters');
+    const weekGrid = document.getElementById('weekGrid');
 
     function getFilteredEntries() {
       return entries.filter(entry => {
@@ -208,6 +239,66 @@
         const matchesDay = entry.date === day;
         const matchesStore = activeStore === 'all' || entry.store === activeStore;
         return matchesDay && matchesStore;
+      });
+    }
+
+    function timeToHour(time) {
+      const [clock, meridiem] = time.split(' ');
+      let [hour, minute] = clock.split(':').map(Number);
+      if (meridiem === 'PM' && hour !== 12) hour += 12;
+      if (meridiem === 'AM' && hour === 12) hour = 0;
+      return hour + (minute / 60);
+    }
+
+    function getEntriesForBlock(day, block) {
+      return entries.filter(entry => {
+        const matchesStore = activeStore === 'all' || entry.store === activeStore;
+        const matchesDay = entry.date === day;
+        const hour = timeToHour(entry.time);
+        return matchesStore && matchesDay && hour >= block.start && hour < block.end;
+      });
+    }
+
+    function renderWeekGrid() {
+      weekGrid.innerHTML = '';
+      const corner = document.createElement('div');
+      corner.className = 'week-time week-day-head';
+      corner.textContent = 'Time';
+      weekGrid.appendChild(corner);
+
+      weekChartOrder.forEach(day => {
+        const head = document.createElement('div');
+        head.className = 'week-cell week-day-head';
+        const dayCount = entries.filter(entry => entry.date === day && (activeStore === 'all' || entry.store === activeStore)).length;
+        head.innerHTML = `<strong>${day}</strong><span class="count">${dayCount} event${dayCount === 1 ? '' : 's'}</span>`;
+        weekGrid.appendChild(head);
+      });
+
+      timeBlocks.forEach(block => {
+        const timeCell = document.createElement('div');
+        timeCell.className = 'week-time';
+        timeCell.textContent = block.label;
+        weekGrid.appendChild(timeCell);
+
+        weekChartOrder.forEach(day => {
+          const cell = document.createElement('div');
+          cell.className = 'week-cell';
+          const blockEntries = getEntriesForBlock(day, block);
+          if (!blockEntries.length) {
+            const empty = document.createElement('span');
+            empty.className = 'count';
+            empty.textContent = '—';
+            cell.appendChild(empty);
+          } else {
+            blockEntries.forEach(item => {
+              const badge = document.createElement('div');
+              badge.className = 'slot-event ' + (item.feasible === 'Yes' ? 'yes' : 'no');
+              badge.innerHTML = `<strong>${item.store}</strong><span>${item.time}</span>`;
+              cell.appendChild(badge);
+            });
+          }
+          weekGrid.appendChild(cell);
+        });
       });
     }
 
@@ -236,7 +327,7 @@
         const button = document.createElement('button');
         button.className = 'day-btn' + (day === activeDay ? ' active' : '');
         button.innerHTML = `<strong>${day}</strong><br><span class="count">${total} stop${total === 1 ? '' : 's'}</span>`;
-        button.addEventListener('click', () => { activeDay = day; renderDays(); renderCalendar(); renderCards(); });
+        button.addEventListener('click', () => { activeDay = day; renderDays(); renderCalendar(); renderCards(); renderWeekGrid(); });
         dayList.appendChild(button);
       });
     }
@@ -300,6 +391,7 @@
       renderDays();
       renderCalendar();
       renderCards();
+      renderWeekGrid();
     });
 
     clearFilters.addEventListener('click', () => {
@@ -309,6 +401,7 @@
       renderDays();
       renderCalendar();
       renderCards();
+      renderWeekGrid();
     });
 
     const themeButton = document.querySelector('[data-theme-toggle]');
@@ -322,6 +415,7 @@
     renderDays();
     renderCalendar();
     renderCards();
+    renderWeekGrid();
   </script>
 </body>
 </html>
