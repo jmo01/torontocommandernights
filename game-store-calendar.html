@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Game Store Calendar</title>
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&f[]=boska@500&display=swap" rel="stylesheet">
+  <style>
+    :root, [data-theme="light"] {
+      --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+      --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
+      --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+      --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
+      --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
+      --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem; --space-4: 1rem;
+      --space-5: 1.25rem; --space-6: 1.5rem; --space-8: 2rem; --space-10: 2.5rem;
+      --space-12: 3rem; --radius-sm: 0.375rem; --radius-md: 0.75rem; --radius-lg: 1rem;
+      --radius-xl: 1.25rem; --radius-full: 9999px;
+      --color-bg: #f7f6f2; --color-surface: #fdfcf9; --color-surface-2: #f2efe9; --color-border: #d8d2c8;
+      --color-text: #28251d; --color-text-muted: #6f6a62; --color-primary: #01696f; --color-primary-highlight: #d9ecec;
+      --color-success: #2f7d32; --color-success-highlight: #dff3e0; --color-error: #b42318; --color-error-highlight: #fce8e6;
+      --shadow-sm: 0 1px 2px rgba(27,24,20,.06); --shadow-md: 0 10px 30px rgba(27,24,20,.08);
+      --font-display: 'Boska', Georgia, serif; --font-body: 'Satoshi', Arial, sans-serif;
+    }
+    [data-theme="dark"] {
+      --color-bg: #171614; --color-surface: #1d1b18; --color-surface-2: #25231f; --color-border: #3b3832;
+      --color-text: #ece7dd; --color-text-muted: #b7afa3; --color-primary: #5fb1b5; --color-primary-highlight: #203638;
+      --color-success: #7bc67f; --color-success-highlight: #1e3521; --color-error: #f17a74; --color-error-highlight: #3c1d1b;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,.25); --shadow-md: 0 12px 32px rgba(0,0,0,.35);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh; font-family: var(--font-body); font-size: var(--text-base); line-height: 1.6;
+      background: linear-gradient(180deg, var(--color-bg), var(--color-surface-2)); color: var(--color-text);
+    }
+    button { font: inherit; cursor: pointer; border: 0; background: none; color: inherit; }
+    .app { max-width: 1200px; margin: 0 auto; padding: var(--space-6); }
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center; gap: var(--space-4); margin-bottom: var(--space-6);
+      flex-wrap: wrap;
+    }
+    .brand { display: flex; align-items: center; gap: var(--space-4); }
+    .logo {
+      width: 48px; height: 48px; border-radius: 14px; background: var(--color-primary-highlight); color: var(--color-primary);
+      display: grid; place-items: center; box-shadow: var(--shadow-sm);
+    }
+    .logo svg { width: 26px; height: 26px; }
+    h1 { font-family: var(--font-display); font-size: var(--text-xl); line-height: 1.05; }
+    .subtitle { color: var(--color-text-muted); max-width: 60ch; }
+    .toggle {
+      padding: 0.8rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-full); background: var(--color-surface);
+      box-shadow: var(--shadow-sm); min-width: 44px; min-height: 44px;
+    }
+    .layout { display: grid; grid-template-columns: 300px 1fr; gap: var(--space-6); }
+    .sidebar, .panel {
+      background: color-mix(in srgb, var(--color-surface) 92%, transparent); border: 1px solid var(--color-border);
+      border-radius: var(--radius-xl); box-shadow: var(--shadow-md);
+    }
+    .sidebar { padding: var(--space-5); position: sticky; top: 1.5rem; align-self: start; }
+    .panel { padding: var(--space-5); }
+    .meta-label { font-size: var(--text-xs); color: var(--color-text-muted); text-transform: uppercase; letter-spacing: .08em; }
+    .day-list { display: grid; gap: var(--space-3); margin-top: var(--space-4); }
+    .day-btn {
+      width: 100%; text-align: left; padding: .9rem 1rem; border-radius: var(--radius-lg); border: 1px solid var(--color-border);
+      background: var(--color-surface-2); transition: .18s ease;
+    }
+    .day-btn.active, .day-btn:hover { background: var(--color-primary-highlight); border-color: var(--color-primary); }
+    .filter-block { margin-top: var(--space-5); display: grid; gap: var(--space-3); }
+    .filter-select { width: 100%; min-height: 44px; padding: .85rem 1rem; border-radius: var(--radius-lg); border: 1px solid var(--color-border); background: var(--color-surface-2); color: var(--color-text); }
+    .clear-btn { width: 100%; min-height: 44px; padding: .8rem 1rem; border-radius: var(--radius-lg); border: 1px solid var(--color-border); background: var(--color-surface); font-weight: 700; }
+    .legend { display: grid; gap: .8rem; margin-top: var(--space-6); }
+    .legend-item { display: flex; align-items: center; gap: .75rem; color: var(--color-text-muted); }
+    .swatch { width: 14px; height: 14px; border-radius: 999px; }
+    .content-top { display: flex; justify-content: space-between; align-items: end; gap: var(--space-4); margin-bottom: var(--space-5); flex-wrap: wrap; }
+    .count { color: var(--color-text-muted); }
+    .cards { display: grid; gap: var(--space-4); }
+    .card {
+      border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-5);
+      background: var(--color-surface); display: grid; gap: var(--space-3); position: relative; overflow: hidden;
+    }
+    .card.yes { background: linear-gradient(180deg, var(--color-success-highlight), var(--color-surface)); }
+    .card.no { background: linear-gradient(180deg, var(--color-error-highlight), var(--color-surface)); }
+    .status-pill {
+      display: inline-flex; align-items: center; gap: .45rem; width: fit-content; padding: .38rem .7rem; border-radius: var(--radius-full);
+      font-size: var(--text-xs); font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+    }
+    .yes .status-pill { background: var(--color-success); color: white; }
+    .no .status-pill { background: var(--color-error); color: white; }
+    .store { font-size: var(--text-lg); font-weight: 700; }
+    .detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: var(--space-3); }
+    .detail {
+      background: color-mix(in srgb, var(--color-surface-2) 80%, transparent); border-radius: var(--radius-md); padding: .9rem 1rem;
+      border: 1px solid color-mix(in srgb, var(--color-border) 80%, transparent);
+    }
+    .calendar-strip { display: grid; grid-template-columns: repeat(7, minmax(90px,1fr)); gap: .75rem; margin-bottom: var(--space-5); }
+    .calendar-day {
+      padding: .85rem; border-radius: var(--radius-md); border: 1px solid var(--color-border); background: var(--color-surface-2);
+      min-height: 82px; display: grid; gap: .35rem;
+    }
+    .calendar-day.active { border-color: var(--color-primary); background: var(--color-primary-highlight); }
+    .calendar-day strong { font-size: var(--text-sm); }
+    .mini-tags { display: flex; flex-wrap: wrap; gap: .35rem; }
+    .mini-tag { font-size: 11px; padding: .18rem .42rem; border-radius: 999px; }
+    .mini-tag.yes { background: var(--color-success-highlight); color: var(--color-success); }
+    .mini-tag.no { background: var(--color-error-highlight); color: var(--color-error); }
+    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } .sidebar { position: static; } }
+    @media (max-width: 640px) { .detail-grid, .calendar-strip { grid-template-columns: 1fr; } .app { padding: var(--space-4); } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 9.5 12 5l8 4.5v8L12 22l-8-4.5z"></path>
+            <path d="M8 11h8"></path>
+            <path d="M12 8v6"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="meta-label">Calendar view</div>
+          <h1>Game store schedule</h1>
+          <p class="subtitle">Each store entry from the screenshot is laid out as a separate card and grouped by day, with green for feasible stops and red for non-feasible ones.</p>
+        </div>
+      </div>
+      <div style="display:flex; gap: .75rem; align-items:center; flex-wrap:wrap;">
+        <a href="https://docs.google.com/spreadsheets/d/1uXlkqKsRY72xk9yKIfm5Y-KTHLPu9ecdhzBPceaQh4M/edit?gid=0#gid=0" target="_blank" rel="noopener noreferrer" style="display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:.8rem 1rem; border-radius:9999px; border:1px solid var(--color-primary); background:var(--color-primary); color:white; text-decoration:none; font-weight:700; box-shadow:var(--shadow-sm);">Open spreadsheet</a>
+        <button class="toggle" data-theme-toggle aria-label="Switch theme">◐</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="sidebar">
+        <div class="meta-label">Days</div>
+        <div class="day-list" id="dayList"></div>
+        <div class="filter-block">
+          <div class="meta-label">Store filter</div>
+          <select id="storeFilter" class="filter-select" aria-label="Filter by store name">
+            <option value="all">All stores</option>
+          </select>
+          <button id="clearFilters" class="clear-btn" type="button">Clear filters</button>
+        </div>
+        <div class="legend">
+          <div class="legend-item"><span class="swatch" style="background: var(--color-success);"></span><span>Feasible = Yes</span></div>
+          <div class="legend-item"><span class="swatch" style="background: var(--color-error);"></span><span>Feasible = No</span></div>
+        </div>
+      </aside>
+
+      <section class="panel">
+        <div class="content-top">
+          <div>
+            <div class="meta-label">Weekly layout</div>
+            <div id="activeHeading" class="store">Friday</div>
+          </div>
+          <div id="activeCount" class="count"></div>
+        </div>
+        <div class="calendar-strip" id="calendarStrip"></div>
+        <div class="cards" id="cards"></div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const entries = [
+      { store: 'Untouchables Gaming', location: '377 Burnhamthorpe Rd East, Mississauga', date: 'Friday', time: '6:30 PM', feasible: 'No' },
+      { store: '401 Games', location: '7700 Keele St, Concord', date: 'Friday', time: '6:00 PM', feasible: 'Yes' },
+      { store: 'Face to Face Games', location: '1398 Danforth Ave, Toronto', date: 'Friday', time: '6:00 PM', feasible: 'Yes' },
+      { store: 'The Guild House', location: '579 St Clair Ave West, Toronto', date: 'Friday', time: '5:30 PM', feasible: 'No' },
+      { store: 'Enter the Battlefield', location: '2172 Speers Rd, Oakville', date: 'Friday', time: '6:00 PM', feasible: 'Yes' },
+      { store: 'Untouchables Gaming', location: '377 Burnhamthorpe Rd East, Mississauga', date: 'Monday', time: '6:30 PM', feasible: 'Yes' },
+      { store: 'Face to Face Games', location: '1398 Danforth Ave, Toronto', date: 'Monday', time: '5:30 PM', feasible: 'No' },
+      { store: 'The Guild House', location: '579 St Clair Ave West, Toronto', date: 'Monday', time: '5:00 PM', feasible: 'No' },
+      { store: 'Hobbiesville', location: '9 Ossington Ave, Toronto', date: 'Monday', time: '6:30 PM', feasible: 'No' },
+      { store: "Emmett's Toy Stop", location: '5324 Dundas St W, Etobicoke', date: 'Saturday', time: '1:00 PM', feasible: 'Yes' },
+      { store: '401 Games', location: '431 Yonge Street, Toronto', date: 'Saturday', time: '12:30 PM', feasible: 'Yes' },
+      { store: 'Untouchables Gaming', location: '377 Burnhamthorpe Rd East, Mississauga', date: 'Sunday', time: '3:00 PM', feasible: 'Yes' },
+      { store: 'The Upper Hand TCG', location: '2150 Burnhamthorpe Rd West, Mississauga', date: 'Sunday', time: '11:00 AM', feasible: 'Yes' },
+      { store: '401 Games', location: '431 Yonge Street, Toronto', date: 'Thursday', time: '5:00 PM', feasible: 'No' },
+      { store: 'Enter the Battlefield', location: '2172 Speers Rd, Oakville', date: 'Tuesday', time: '5:30 PM', feasible: 'No' },
+      { store: "Emmett's Toy Stop", location: '5324 Dundas St W, Etobicoke', date: 'Wednesday', time: '6:00 PM', feasible: 'Yes' },
+      { store: 'The Upper Hand TCG', location: '2150 Burnhamthorpe Rd West, Mississauga', date: 'Wednesday', time: '5:00 PM', feasible: 'No' }
+    ];
+
+    const dayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const storeNames = [...new Set(entries.map(entry => entry.store))].sort((a, b) => a.localeCompare(b));
+    let activeDay = 'all';
+    let activeStore = 'all';
+
+    const dayList = document.getElementById('dayList');
+    const cards = document.getElementById('cards');
+    const heading = document.getElementById('activeHeading');
+    const count = document.getElementById('activeCount');
+    const calendarStrip = document.getElementById('calendarStrip');
+    const storeFilter = document.getElementById('storeFilter');
+    const clearFilters = document.getElementById('clearFilters');
+
+    function getFilteredEntries() {
+      return entries.filter(entry => {
+        const matchesDay = activeDay === 'all' || entry.date === activeDay;
+        const matchesStore = activeStore === 'all' || entry.store === activeStore;
+        return matchesDay && matchesStore;
+      });
+    }
+
+    function getEntriesForDay(day) {
+      return entries.filter(entry => {
+        const matchesDay = entry.date === day;
+        const matchesStore = activeStore === 'all' || entry.store === activeStore;
+        return matchesDay && matchesStore;
+      });
+    }
+
+    function populateStoreFilter() {
+      storeNames.forEach(store => {
+        const option = document.createElement('option');
+        option.value = store;
+        option.textContent = store;
+        storeFilter.appendChild(option);
+      });
+      storeFilter.value = activeStore;
+    }
+
+    function renderDays() {
+      dayList.innerHTML = '';
+
+      const allItems = getFilteredEntries();
+      const allButton = document.createElement('button');
+      allButton.className = 'day-btn' + (activeDay === 'all' ? ' active' : '');
+      allButton.innerHTML = `<strong>All days</strong><br><span class="count">${allItems.length} stop${allItems.length === 1 ? '' : 's'}</span>`;
+      allButton.addEventListener('click', () => { activeDay = 'all'; renderDays(); renderCalendar(); renderCards(); });
+      dayList.appendChild(allButton);
+
+      dayOrder.forEach(day => {
+        const total = getEntriesForDay(day).length;
+        const button = document.createElement('button');
+        button.className = 'day-btn' + (day === activeDay ? ' active' : '');
+        button.innerHTML = `<strong>${day}</strong><br><span class="count">${total} stop${total === 1 ? '' : 's'}</span>`;
+        button.addEventListener('click', () => { activeDay = day; renderDays(); renderCalendar(); renderCards(); });
+        dayList.appendChild(button);
+      });
+    }
+
+    function renderCalendar() {
+      calendarStrip.innerHTML = '';
+      dayOrder.forEach(day => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'calendar-day' + (day === activeDay ? ' active' : '');
+        const items = getEntriesForDay(day);
+        wrapper.innerHTML = `<strong>${day}</strong><span class="count">${items.length} event${items.length === 1 ? '' : 's'}</span>`;
+        const tags = document.createElement('div');
+        tags.className = 'mini-tags';
+        items.slice(0, 3).forEach(item => {
+          const tag = document.createElement('span');
+          tag.className = 'mini-tag ' + (item.feasible === 'Yes' ? 'yes' : 'no');
+          tag.textContent = item.time;
+          tags.appendChild(tag);
+        });
+        if (!items.length) {
+          const empty = document.createElement('span');
+          empty.className = 'count';
+          empty.textContent = 'No entries';
+          tags.appendChild(empty);
+        }
+        wrapper.appendChild(tags);
+        calendarStrip.appendChild(wrapper);
+      });
+    }
+
+    function renderCards() {
+      const items = getFilteredEntries();
+      const titleDay = activeDay === 'all' ? 'All days' : activeDay;
+      const titleStore = activeStore === 'all' ? 'All stores' : activeStore;
+      heading.textContent = `${titleDay} · ${titleStore}`;
+      count.textContent = `${items.length} planned stop${items.length === 1 ? '' : 's'}`;
+      cards.innerHTML = '';
+      if (!items.length) {
+        cards.innerHTML = '<article class="card"><div class="store">No matching entries</div><div class="count">Try a different day or store filter.</div></article>';
+        return;
+      }
+      items.forEach(item => {
+        const card = document.createElement('article');
+        card.className = 'card ' + (item.feasible === 'Yes' ? 'yes' : 'no');
+        card.innerHTML = `
+          <div class="status-pill">${item.feasible === 'Yes' ? 'Feasible' : 'Not feasible'}</div>
+          <div class="store">${item.store}</div>
+          <div class="detail-grid">
+            <div class="detail"><div class="meta-label">Location</div><div>${item.location}</div></div>
+            <div class="detail"><div class="meta-label">Time</div><div>${item.date} · ${item.time}</div></div>
+          </div>
+        `;
+        cards.appendChild(card);
+      });
+    }
+
+    populateStoreFilter();
+
+    storeFilter.addEventListener('change', (event) => {
+      activeStore = event.target.value;
+      renderDays();
+      renderCalendar();
+      renderCards();
+    });
+
+    clearFilters.addEventListener('click', () => {
+      activeDay = 'all';
+      activeStore = 'all';
+      storeFilter.value = 'all';
+      renderDays();
+      renderCalendar();
+      renderCards();
+    });
+
+    const themeButton = document.querySelector('[data-theme-toggle]');
+    let theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+    themeButton.addEventListener('click', () => {
+      theme = theme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', theme);
+    });
+
+    renderDays();
+    renderCalendar();
+    renderCards();
+  </script>
+</body>
+</html>
