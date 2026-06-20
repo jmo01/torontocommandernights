@@ -157,6 +157,7 @@
             <option value="all">All stores</option>
           </select>
           <button id="clearFilters" class="clear-btn" type="button">Clear filters</button>
+          <button id="resetSavedState" class="clear-btn" type="button">Reset saved changes</button>
         </div>
         <div class="legend">
           <div class="legend-item"><span class="swatch" style="background: var(--color-success);"></span><span>Feasible = Yes</span></div>
@@ -232,7 +233,49 @@
     const calendarStrip = document.getElementById('calendarStrip');
     const storeFilter = document.getElementById('storeFilter');
     const clearFilters = document.getElementById('clearFilters');
+    const resetSavedState = document.getElementById('resetSavedState');
     const weekGrid = document.getElementById('weekGrid');
+    const STORAGE_KEY = 'game-store-calendar-state-v1';
+
+    function saveState() {
+      try {
+        const payload = {
+          theme,
+          activeDay,
+          activeStore,
+          feasibility: Object.fromEntries(entries.map(entry => [entry.id, entry.feasible]))
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      } catch (error) {
+        console.warn('Unable to save state.', error);
+      }
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const saved = JSON.parse(raw);
+        if (saved && saved.feasibility) {
+          entries.forEach(entry => {
+            if (saved.feasibility[entry.id]) entry.feasible = saved.feasibility[entry.id];
+          });
+        }
+        if (saved && saved.activeDay) activeDay = saved.activeDay;
+        if (saved && saved.activeStore) activeStore = saved.activeStore;
+        if (saved && saved.theme) theme = saved.theme;
+      } catch (error) {
+        console.warn('Unable to load saved state.', error);
+      }
+    }
+
+    function clearSavedState() {
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch (error) {
+        console.warn('Unable to clear saved state.', error);
+      }
+    }
 
     function getFeasibilityClass(value) {
       return feasibilityClassMap[value] || 'no';
@@ -242,6 +285,7 @@
       const entry = entries.find(item => item.id === id);
       if (!entry) return;
       entry.feasible = value;
+      saveState();
       renderDays();
       renderCalendar();
       renderCards();
@@ -361,7 +405,7 @@
         const button = document.createElement('button');
         button.className = 'day-btn' + (day === activeDay ? ' active' : '');
         button.innerHTML = `<strong>${day}</strong><br><span class="count">${total} stop${total === 1 ? '' : 's'}</span>`;
-        button.addEventListener('click', () => { activeDay = day; renderDays(); renderCalendar(); renderCards(); renderWeekGrid(); });
+        button.addEventListener('click', () => { activeDay = day; saveState(); renderDays(); renderCalendar(); renderCards(); renderWeekGrid(); });
         dayList.appendChild(button);
       });
     }
@@ -418,10 +462,15 @@
       });
     }
 
+    let theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    loadState();
     populateStoreFilter();
+    storeFilter.value = activeStore;
+    document.documentElement.setAttribute('data-theme', theme);
 
     storeFilter.addEventListener('change', (event) => {
       activeStore = event.target.value;
+      saveState();
       renderDays();
       renderCalendar();
       renderCards();
@@ -432,18 +481,23 @@
       activeDay = 'all';
       activeStore = 'all';
       storeFilter.value = 'all';
+      saveState();
       renderDays();
       renderCalendar();
       renderCards();
       renderWeekGrid();
     });
 
+    resetSavedState.addEventListener('click', () => {
+      clearSavedState();
+      window.location.reload();
+    });
+
     const themeButton = document.querySelector('[data-theme-toggle]');
-    let theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', theme);
     themeButton.addEventListener('click', () => {
       theme = theme === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', theme);
+      saveState();
     });
 
     renderDays();
