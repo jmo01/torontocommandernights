@@ -18,14 +18,14 @@
       --radius-xl: 1.25rem; --radius-full: 9999px;
       --color-bg: #f7f6f2; --color-surface: #fdfcf9; --color-surface-2: #f2efe9; --color-border: #d8d2c8;
       --color-text: #28251d; --color-text-muted: #6f6a62; --color-primary: #01696f; --color-primary-highlight: #d9ecec;
-      --color-success: #2f7d32; --color-success-highlight: #dff3e0; --color-error: #b42318; --color-error-highlight: #fce8e6;
+      --color-success: #2f7d32; --color-success-highlight: #dff3e0; --color-warning: #d97706; --color-warning-highlight: #fff0d9; --color-error: #b42318; --color-error-highlight: #fce8e6;
       --shadow-sm: 0 1px 2px rgba(27,24,20,.06); --shadow-md: 0 10px 30px rgba(27,24,20,.08);
       --font-display: 'Boska', Georgia, serif; --font-body: 'Satoshi', Arial, sans-serif;
     }
     [data-theme="dark"] {
       --color-bg: #171614; --color-surface: #1d1b18; --color-surface-2: #25231f; --color-border: #3b3832;
       --color-text: #ece7dd; --color-text-muted: #b7afa3; --color-primary: #5fb1b5; --color-primary-highlight: #203638;
-      --color-success: #7bc67f; --color-success-highlight: #1e3521; --color-error: #f17a74; --color-error-highlight: #3c1d1b;
+      --color-success: #7bc67f; --color-success-highlight: #1e3521; --color-warning: #f0a84b; --color-warning-highlight: #4a3318; --color-error: #f17a74; --color-error-highlight: #3c1d1b;
       --shadow-sm: 0 1px 2px rgba(0,0,0,.25); --shadow-md: 0 12px 32px rgba(0,0,0,.35);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -79,12 +79,14 @@
       background: var(--color-surface); display: grid; gap: var(--space-3); position: relative; overflow: hidden;
     }
     .card.yes { background: linear-gradient(180deg, var(--color-success-highlight), var(--color-surface)); }
+    .card.tolerable { background: linear-gradient(180deg, var(--color-warning-highlight), var(--color-surface)); }
     .card.no { background: linear-gradient(180deg, var(--color-error-highlight), var(--color-surface)); }
     .status-pill {
       display: inline-flex; align-items: center; gap: .45rem; width: fit-content; padding: .38rem .7rem; border-radius: var(--radius-full);
       font-size: var(--text-xs); font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
     }
     .yes .status-pill { background: var(--color-success); color: white; }
+    .tolerable .status-pill { background: var(--color-warning); color: white; }
     .no .status-pill { background: var(--color-error); color: white; }
     .store { font-size: var(--text-lg); font-weight: 700; }
     .detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: var(--space-3); }
@@ -102,6 +104,7 @@
     .mini-tags { display: flex; flex-wrap: wrap; gap: .35rem; }
     .mini-tag { font-size: 11px; padding: .18rem .42rem; border-radius: 999px; }
     .mini-tag.yes { background: var(--color-success-highlight); color: var(--color-success); }
+    .mini-tag.tolerable { background: var(--color-warning-highlight); color: var(--color-warning); }
     .mini-tag.no { background: var(--color-error-highlight); color: var(--color-error); }
     .week-chart-wrap { margin-top: var(--space-6); border: 1px solid var(--color-border); border-radius: var(--radius-xl); overflow: hidden; background: var(--color-surface); }
     .week-chart-head { padding: 1rem 1.25rem; border-bottom: 1px solid var(--color-border); background: var(--color-surface-2); }
@@ -113,8 +116,10 @@
     .week-cell { display: grid; gap: .5rem; align-content: start; background: color-mix(in srgb, var(--color-surface) 96%, transparent); }
     .slot-event { border-radius: var(--radius-md); padding: .55rem .65rem; font-size: var(--text-xs); line-height: 1.35; border: 1px solid transparent; }
     .slot-event.yes { background: var(--color-success-highlight); color: var(--color-success); border-color: color-mix(in srgb, var(--color-success) 30%, white); }
+    .slot-event.tolerable { background: var(--color-warning-highlight); color: var(--color-warning); border-color: color-mix(in srgb, var(--color-warning) 30%, white); }
     .slot-event.no { background: var(--color-error-highlight); color: var(--color-error); border-color: color-mix(in srgb, var(--color-error) 30%, white); }
     .slot-event strong { display: block; font-size: var(--text-sm); color: var(--color-text); }
+    .feasible-editor { margin-top: .5rem; width: 100%; min-height: 36px; border-radius: .6rem; border: 1px solid color-mix(in srgb, var(--color-border) 85%, transparent); background: color-mix(in srgb, var(--color-surface) 88%, transparent); color: var(--color-text); padding: .35rem .5rem; }
     @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } .sidebar { position: static; } .week-chart-wrap { overflow-x: auto; } .week-grid { min-width: 980px; } }
     @media (max-width: 640px) { .detail-grid, .calendar-strip { grid-template-columns: 1fr; } .app { padding: var(--space-4); } }
   </style>
@@ -133,7 +138,7 @@
         <div>
           <div class="meta-label">Calendar view</div>
           <h1>Game store schedule</h1>
-          <p class="subtitle">Each store entry from the screenshot is laid out as a separate card and grouped by day, with green for feasible stops and red for non-feasible ones.</p>
+          <p class="subtitle">Each store entry from the screenshot is laid out as a separate card and grouped by day, with green for feasible stops, orange for tolerable ones, and red for non-feasible ones.</p>
         </div>
       </div>
       <div style="display:flex; gap: .75rem; align-items:center; flex-wrap:wrap;">
@@ -155,6 +160,7 @@
         </div>
         <div class="legend">
           <div class="legend-item"><span class="swatch" style="background: var(--color-success);"></span><span>Feasible = Yes</span></div>
+          <div class="legend-item"><span class="swatch" style="background: var(--color-warning);"></span><span>Feasible = Tolerable</span></div>
           <div class="legend-item"><span class="swatch" style="background: var(--color-error);"></span><span>Feasible = No</span></div>
         </div>
       </aside>
@@ -182,23 +188,23 @@
 
   <script>
     const entries = [
-      { store: 'Untouchables Gaming', location: '377 Burnhamthorpe Rd East, Mississauga', date: 'Friday', time: '6:30 PM', feasible: 'No' },
-      { store: '401 Games', location: '7700 Keele St, Concord', date: 'Friday', time: '6:00 PM', feasible: 'Yes' },
-      { store: 'Face to Face Games', location: '1398 Danforth Ave, Toronto', date: 'Friday', time: '6:00 PM', feasible: 'Yes' },
-      { store: 'The Guild House', location: '579 St Clair Ave West, Toronto', date: 'Friday', time: '5:30 PM', feasible: 'No' },
-      { store: 'Enter the Battlefield', location: '2172 Speers Rd, Oakville', date: 'Friday', time: '6:00 PM', feasible: 'Yes' },
-      { store: 'Untouchables Gaming', location: '377 Burnhamthorpe Rd East, Mississauga', date: 'Monday', time: '6:30 PM', feasible: 'Yes' },
-      { store: 'Face to Face Games', location: '1398 Danforth Ave, Toronto', date: 'Monday', time: '5:30 PM', feasible: 'No' },
-      { store: 'The Guild House', location: '579 St Clair Ave West, Toronto', date: 'Monday', time: '5:00 PM', feasible: 'No' },
-      { store: 'Hobbiesville', location: '9 Ossington Ave, Toronto', date: 'Monday', time: '6:30 PM', feasible: 'No' },
-      { store: "Emmett's Toy Stop", location: '5324 Dundas St W, Etobicoke', date: 'Saturday', time: '1:00 PM', feasible: 'Yes' },
-      { store: '401 Games', location: '431 Yonge Street, Toronto', date: 'Saturday', time: '12:30 PM', feasible: 'Yes' },
-      { store: 'Untouchables Gaming', location: '377 Burnhamthorpe Rd East, Mississauga', date: 'Sunday', time: '3:00 PM', feasible: 'Yes' },
-      { store: 'The Upper Hand TCG', location: '2150 Burnhamthorpe Rd West, Mississauga', date: 'Sunday', time: '11:00 AM', feasible: 'Yes' },
-      { store: '401 Games', location: '431 Yonge Street, Toronto', date: 'Thursday', time: '5:00 PM', feasible: 'No' },
-      { store: 'Enter the Battlefield', location: '2172 Speers Rd, Oakville', date: 'Tuesday', time: '5:30 PM', feasible: 'No' },
-      { store: "Emmett's Toy Stop", location: '5324 Dundas St W, Etobicoke', date: 'Wednesday', time: '6:00 PM', feasible: 'Yes' },
-      { store: 'The Upper Hand TCG', location: '2150 Burnhamthorpe Rd West, Mississauga', date: 'Wednesday', time: '5:00 PM', feasible: 'No' }
+      { id: 1, store: 'Untouchables Gaming', location: '377 Burnhamthorpe Rd East, Mississauga', date: 'Friday', time: '6:30 PM', feasible: 'No' },
+      { id: 2, store: '401 Games', location: '7700 Keele St, Concord', date: 'Friday', time: '6:00 PM', feasible: 'Yes' },
+      { id: 3, store: 'Face to Face Games', location: '1398 Danforth Ave, Toronto', date: 'Friday', time: '6:00 PM', feasible: 'Yes' },
+      { id: 4, store: 'The Guild House', location: '579 St Clair Ave West, Toronto', date: 'Friday', time: '5:30 PM', feasible: 'No' },
+      { id: 5, store: 'Enter the Battlefield', location: '2172 Speers Rd, Oakville', date: 'Friday', time: '6:00 PM', feasible: 'Yes' },
+      { id: 6, store: 'Untouchables Gaming', location: '377 Burnhamthorpe Rd East, Mississauga', date: 'Monday', time: '6:30 PM', feasible: 'Yes' },
+      { id: 7, store: 'Face to Face Games', location: '1398 Danforth Ave, Toronto', date: 'Monday', time: '5:30 PM', feasible: 'No' },
+      { id: 8, store: 'The Guild House', location: '579 St Clair Ave West, Toronto', date: 'Monday', time: '5:00 PM', feasible: 'No' },
+      { id: 9, store: 'Hobbiesville', location: '9 Ossington Ave, Toronto', date: 'Monday', time: '6:30 PM', feasible: 'No' },
+      { id: 10, store: "Emmett's Toy Stop", location: '5324 Dundas St W, Etobicoke', date: 'Saturday', time: '1:00 PM', feasible: 'Yes' },
+      { id: 11, store: '401 Games', location: '431 Yonge Street, Toronto', date: 'Saturday', time: '12:30 PM', feasible: 'Yes' },
+      { id: 12, store: 'Untouchables Gaming', location: '377 Burnhamthorpe Rd East, Mississauga', date: 'Sunday', time: '3:00 PM', feasible: 'Yes' },
+      { id: 13, store: 'The Upper Hand TCG', location: '2150 Burnhamthorpe Rd West, Mississauga', date: 'Sunday', time: '11:00 AM', feasible: 'Yes' },
+      { id: 14, store: '401 Games', location: '431 Yonge Street, Toronto', date: 'Thursday', time: '5:00 PM', feasible: 'No' },
+      { id: 15, store: 'Enter the Battlefield', location: '2172 Speers Rd, Oakville', date: 'Tuesday', time: '5:30 PM', feasible: 'No' },
+      { id: 16, store: "Emmett's Toy Stop", location: '5324 Dundas St W, Etobicoke', date: 'Wednesday', time: '6:00 PM', feasible: 'Yes' },
+      { id: 17, store: 'The Upper Hand TCG', location: '2150 Burnhamthorpe Rd West, Mississauga', date: 'Wednesday', time: '5:00 PM', feasible: 'No' }
     ];
 
     const dayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -213,6 +219,8 @@
       { label: '6 PM–9 PM', start: 18, end: 21 },
       { label: '9 PM–12 AM', start: 21, end: 24 }
     ];
+    const feasibilityOptions = ['Yes', 'Tolerable', 'No'];
+    const feasibilityClassMap = { Yes: 'yes', Tolerable: 'tolerable', No: 'no' };
     const storeNames = [...new Set(entries.map(entry => entry.store))].sort((a, b) => a.localeCompare(b));
     let activeDay = 'all';
     let activeStore = 'all';
@@ -225,6 +233,20 @@
     const storeFilter = document.getElementById('storeFilter');
     const clearFilters = document.getElementById('clearFilters');
     const weekGrid = document.getElementById('weekGrid');
+
+    function getFeasibilityClass(value) {
+      return feasibilityClassMap[value] || 'no';
+    }
+
+    function updateEntryFeasibility(id, value) {
+      const entry = entries.find(item => item.id === id);
+      if (!entry) return;
+      entry.feasible = value;
+      renderDays();
+      renderCalendar();
+      renderCards();
+      renderWeekGrid();
+    }
 
     function getFilteredEntries() {
       return entries.filter(entry => {
@@ -292,8 +314,20 @@
           } else {
             blockEntries.forEach(item => {
               const badge = document.createElement('div');
-              badge.className = 'slot-event ' + (item.feasible === 'Yes' ? 'yes' : 'no');
+              badge.className = 'slot-event ' + getFeasibilityClass(item.feasible);
               badge.innerHTML = `<strong>${item.store}</strong><span>${item.time}</span>`;
+              const editor = document.createElement('select');
+              editor.className = 'feasible-editor';
+              editor.setAttribute('aria-label', `Change feasibility for ${item.store} on ${item.date} at ${item.time}`);
+              feasibilityOptions.forEach(optionValue => {
+                const option = document.createElement('option');
+                option.value = optionValue;
+                option.textContent = optionValue;
+                if (optionValue === item.feasible) option.selected = true;
+                editor.appendChild(option);
+              });
+              editor.addEventListener('change', event => updateEntryFeasibility(item.id, event.target.value));
+              badge.appendChild(editor);
               cell.appendChild(badge);
             });
           }
@@ -343,7 +377,7 @@
         tags.className = 'mini-tags';
         items.slice(0, 3).forEach(item => {
           const tag = document.createElement('span');
-          tag.className = 'mini-tag ' + (item.feasible === 'Yes' ? 'yes' : 'no');
+          tag.className = 'mini-tag ' + getFeasibilityClass(item.feasible);
           tag.textContent = item.time;
           tags.appendChild(tag);
         });
@@ -371,9 +405,9 @@
       }
       items.forEach(item => {
         const card = document.createElement('article');
-        card.className = 'card ' + (item.feasible === 'Yes' ? 'yes' : 'no');
+        card.className = 'card ' + getFeasibilityClass(item.feasible);
         card.innerHTML = `
-          <div class="status-pill">${item.feasible === 'Yes' ? 'Feasible' : 'Not feasible'}</div>
+          <div class="status-pill">${item.feasible === 'Yes' ? 'Feasible' : item.feasible === 'Tolerable' ? 'Tolerable' : 'Not feasible'}</div>
           <div class="store">${item.store}</div>
           <div class="detail-grid">
             <div class="detail"><div class="meta-label">Location</div><div>${item.location}</div></div>
